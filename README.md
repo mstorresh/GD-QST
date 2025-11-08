@@ -13,3 +13,7 @@ conda activate gd_qst_env
 The notebooks in the `examples` folder are tutorials on how to do the quantum state tomography with the different methods of gradient descent. 
 
 The `data_and_paper-plots` folder contains a Jupyter Notebook (`.ipynb`) that runs the methods used to generate the plots presented in the paper, along with a ZIP file containing the corresponding data.
+
+## 🔹 Installation
+
+Install the package directly from GitHub:
