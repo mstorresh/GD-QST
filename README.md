@@ -17,3 +17,8 @@ The `data_and_paper-plots` folder contains a Jupyter Notebook (`.ipynb`) that ru
 ## 🔹 Installation
 
 Install the package directly from GitHub:
+
+```bash 
+
+pip install git+https://github.com/mstorresh/GD-QST.git@pip-gd-qst
+
