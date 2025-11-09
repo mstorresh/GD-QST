@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gd-qst"
+version = "1.0.0"
+description = "The GD methods for QST"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "Manuel"}]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License", 
+    "Operating System :: OS Independent"
+]
+
+dependencies = [
+  "numpy>=1.26.3,<2.0",
+  "scipy>=1.11.4,<2.0",
+  "matplotlib>=3.8.0,<4.0",
+  "matplotlib-inline>=0.1.6,<0.2",
+  "jax==0.4.23",
+  "jaxlib==0.4.23",
+  "optax==0.1.8",
+  "qutip==5.0.0a2",
+  "qutip-qip==0.3.2",
+  "tensorflow==2.15.0.post1",
+  "tensorflow-addons==0.23.0",
+  "tensorflow-estimator==2.15.0",
+  "tensorflow-io-gcs-filesystem==0.35.0",
+  "tqdm>=4.66.1,<5.0",
+  "cvxpy==1.5.3"
+]
