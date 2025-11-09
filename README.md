@@ -22,3 +22,8 @@ Install the package directly from GitHub:
 
 pip install git+https://github.com/mstorresh/GD-QST.git@pip-gd-qst
 
+## ⚠️ Tested environment:
+- Python 3.10
+- QuTiP 5.0.0a2
+- NumPy 1.26.3
+- SciPy 1.11.4
