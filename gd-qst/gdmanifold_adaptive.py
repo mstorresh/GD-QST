@@ -92,8 +92,8 @@ def cost(rho1: jnp.ndarray, data: jnp.ndarray, ops_jnp: jnp.ndarray, lamb:float)
     l1 = jnp.sum((data - expect_prob_ket(ops_jnp,rho1))**2)
     return l1 + lamb*jnp.linalg.norm(rho1, 1)
 
-def gd_manifold_adaptive(data, rho_or, ops_jnp, params: jnp.ndarray, iterations: int, 
-                batch_size: int, lr: float =0.2, boost: float =1.1, decay: float = 0.2, lamb:float =0.0001, tqdm_off=False):
+def gd_manifold_adaptive(data, ops_jnp, params: jnp.ndarray, iterations: int, 
+                batch_size: int, rho_or = None, lr: float =0.2, boost: float =1.1, decay: float = 0.2, lamb:float =0.0001, tqdm_off=False):
   """
   Function to do the GD-mani.
   Return:
@@ -174,8 +174,9 @@ def gd_manifold_adaptive(data, rho_or, ops_jnp, params: jnp.ndarray, iterations:
     loss1.append(float(cost(params, data_b, ops2, lamb)))
     rho_iter = mix_rho(params, HS, kn)
     
-    f = qtp.fidelity(rho_or, qtp.Qobj(rho_iter))
-    fidelities_GD.append(f)
+    if rho_or is not None:
+        f = qtp.fidelity(rho_or, qtp.Qobj(rho_iter))
+        fidelities_GD.append(f)
 
     end = time.time()
     timestep = end - start

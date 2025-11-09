@@ -15,6 +15,88 @@ from tqdm.auto import tqdm
 import time
 
 
+
+
+def ansatz(kn: int, HS : int, gdmethod : str):
+    """
+    Creates the proper ansatz structure for the different GD methods
+    
+    Args: 
+        kn (int) : rank number
+        HS (int) : Hilbert space, the dimension of the kets 
+    
+    Output:
+        T_rank : Ansatz GD-Cholesky rank
+        T_triangular : Ansatz GD-Cholesky triangular
+        column_ket_pro : Ansatz GD-manifold
+        ket_f, prob1_array_jnp : Ansatz GD-projective 
+        
+    """
+    if gdmethod == "chol_rank":
+        # T_rank  = arbitrary r x p matrix ansatz for Cholesky
+        real_part = np.random.rand(kn, HS)  # Random numbers from a uniform distribution over [0, 1)
+        imaginary_part = np.random.rand(kn, HS)  # Same for the imaginary part
+        guess = real_part + 1j * imaginary_part
+        T_rank = jnp.asarray(guess)
+        return T_rank
+
+    elif gdmethod == "chol_triangular":    
+        # T_triangular Lower traingular matrix ansatz for Cholesky
+        T_triangular = jnp.asarray(rho_cons(np.random.rand(HS, HS) + 1j*np.random.rand(HS, HS)))
+        return T_triangular
+
+    else:
+        ketl1 = Nkets(kn, HS)   # generate kn random kets with hilbert space HS
+        ketl1_np = [a.full() for a in ketl1]
+        ketl2 = [a.full().flatten() for a in ketl1]
+        ketl2_np = np.asarray(ketl2)
+        ketl2_jnp = jnp.asarray(ketl2)
+        ketl1_jnp = jnp.asarray(ketl1_np)
+        prob1_array = np.random.rand(kn) # create the second list for the random probabilities
+        prob1_array = softmax(prob1_array)
+        prob1_array_jnp = jnp.asarray(prob1_array)
+        
+        mixed_density = 0
+        for i in range(len(ketl1)): # to create the density matrix
+            density_i = ketl1[i]*ketl1[i].dag()
+            mixed_density += prob1_array[i]*density_i
+        
+        rho_ran = mixed_density
+        rho_ran_np = rho_ran.full()
+            
+        # --- kets for GD proj -------------------------------------
+        if gdmethod == "gd_project":
+            ket_f = ketl1_jnp.flatten()
+            ket_f = ket_f[:, jnp.newaxis]
+            
+            return ket_f, prob1_array_jnp
+
+        # --- column ket for GD manifold ------------------------
+        elif gdmethod == "gd_manifold":
+            prob_sqrt = jnp.sqrt(prob1_array_jnp) 
+            prob1_array_reshaped = prob_sqrt[:, jnp.newaxis]
+            ket_prob_o = prob1_array_reshaped * ketl2_jnp 
+            ket_prob = ket_prob_o.flatten()
+            column_ket_pro = ket_prob[:, np.newaxis]
+            
+            return column_ket_pro
+        
+        else: 
+            raise ValueError("The valid methods are: 'chol_rank', 'chol_triangular', 'gd_project', 'gd_manifold'")
+            
+
+
+@jit
+def rho_cons(matr1: jnp.ndarray):
+    #constrain to maintain the lower triangular
+    diagonal_elements = jnp.diag(jnp.diag(matr1).real)
+    matr1 -= jnp.diag(jnp.diag(matr1))
+    matr1 += diagonal_elements
+    low_tri = jnp.tril(jnp.ones_like(matr1))
+    matr1 *= low_tri
+    return matr1
+
+
 @jit
 def softmax(probs: jnp.ndarray):
     # soft max function for the probabilities
@@ -77,8 +159,8 @@ def cost(rho1: jnp.ndarray, probs: jnp.ndarray,data: jnp.ndarray, ops_jnp: jnp.n
     return l1 + lamb*jnp.linalg.norm(rho1, 1)
 
 
-def gd_project(data, rho_or, ops_jnp: jnp.ndarray, params: jnp.ndarray, prob:jnp.ndarray, 
-        iterations: int, batch_size: int, lr: float = 1e-1, decay:float = 0.999, lamb:float = 0.0000001, tqdm_off=False):
+def gd_project(data,  ops_jnp: jnp.ndarray, params: jnp.ndarray, prob:jnp.ndarray, 
+        iterations: int, batch_size: int, rho_or = None, lr: float = 1e-1, decay:float = 0.999, lamb:float = 0.0000001, tqdm_off=False):
   """
   Function to do the GD-proj.
   Return:
@@ -162,9 +244,10 @@ def gd_project(data, rho_or, ops_jnp: jnp.ndarray, params: jnp.ndarray, prob:jnp
     par1 = rho_stat(params, prob, HS, kn)
     # a += verific(par1)
     #.................................................................
-    f = qtp.fidelity(rho_or, qtp.Qobj(par1))
-    # f = qtp.fidelity(rho_or, qtp.Qobj(params))
-    fidelities_GD.append(f)
+    if rho_or is not None:
+        f = qtp.fidelity(rho_or, qtp.Qobj(par1))
+        fidelities_GD.append(f)
+    
     end = time.time()
     timestep = end - start
     tot_time += timestep

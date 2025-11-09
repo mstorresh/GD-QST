@@ -49,8 +49,8 @@ def cost(rho1: jnp.ndarray, data: jnp.ndarray, ops_jnp: jnp.ndarray, lamb:float)
     return l2 + lamb*jnp.linalg.norm(rho, 1)
 
 
-def gd_chol_rank(data, rho_or, ops_jnp, params: optax.Params, iterations: int,  batch_size: int,
-            lr=2e-1, decay = 0.999, lamb:float =0.00001, batch=True, tqdm_off=False):
+def gd_chol_rank(data,  ops_jnp, params: optax.Params, iterations: int,  batch_size: int, 
+            rho_or = None ,lr=2e-1, decay = 0.999, lamb:float =0.00001, batch=True, tqdm_off=False):
   """
   Function to do the GD-Chol.
   Return:
@@ -61,11 +61,11 @@ def gd_chol_rank(data, rho_or, ops_jnp, params: optax.Params, iterations: int,  
 
   Input:
     data: the expected value of the original density matrix
-    rho_or: original density matrix, to calculate the fidelity
     ops_jnp: POVM in jnp array
     params: Ansatz, any complex matrix T (not necessary the lower triangular)
     iterations: number of iterations for the method
     batch_size: batch size
+    rho_or: original density matrix, to calculate the fidelity
     lr: learning rate
     decay: value of the decay of the lr (defined in given optimizer)
     lamb: hyperparameter l1 regularization
@@ -128,8 +128,9 @@ def gd_chol_rank(data, rho_or, ops_jnp, params: optax.Params, iterations: int,  
     #params = rho_cons(params)
     par1 = jnp.matmul(jnp.conj(params.T),params)/jnp.trace(jnp.matmul(jnp.conj(params.T),params))
     loss1.append(float(cost(params, data_b, ops2, lamb)))
-    f = qtp.fidelity(rho_or, qtp.Qobj(par1))
-    fidelities_GD.append(f)
+    if rho_or is not None:
+      f = qtp.fidelity(rho_or, qtp.Qobj(par1))
+      fidelities_GD.append(f) 
     
     end = time.time()
     timestep = end - start

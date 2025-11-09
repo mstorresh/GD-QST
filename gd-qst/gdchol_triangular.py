@@ -87,8 +87,7 @@ def cost(rho1: jnp.ndarray, data: jnp.ndarray, ops_jnp: jnp.ndarray, lamb:float)
     return l1 + lamb*jnp.linalg.norm(rho, 1)
 
 
-def gd_chol_triangular(data, rho_or, ops_jnp, params: optax.Params, iterations: int,  batch_size: int,
-            lr=2e-1, decay = 0.999, lamb:float =0.00001, batch=True, tqdm_off=False):
+def gd_chol_triangular(data, ops_jnp, params: optax.Params, iterations: int,  batch_size: int, rho_or = None, lr=2e-1, decay = 0.999, lamb:float =0.00001, batch=True, tqdm_off=False):
   """
   Function to do the GD-Chol.
   Return:
@@ -163,9 +162,10 @@ def gd_chol_triangular(data, rho_or, ops_jnp, params: optax.Params, iterations: 
     params = rho_cons(params)
     par1 = jnp.matmul(jnp.conj(params.T),params)/jnp.trace(jnp.matmul(jnp.conj(params.T),params))
     loss1.append(float(cost(params, data_b, ops2, lamb)))
-    f = qtp.fidelity(rho_or, qtp.Qobj(par1))
-    fidelities_GD.append(f)
-    
+    if rho_or is not None:
+        f = qtp.fidelity(rho_or, qtp.Qobj(par1))
+        fidelities_GD.append(f)
+        
     end = time.time()
     timestep = end - start
     tot_time += timestep
